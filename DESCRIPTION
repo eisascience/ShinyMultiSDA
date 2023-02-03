@@ -1,0 +1,42 @@
+Package: ShinyMultiSDA
+Title: A shiny app to load and browse multiple SDA objects.
+Version: 1.0.0
+Authors@R: 
+    person(given = "eisamahyari",
+           role = c("aut", "cre"),
+           email = "mahyarie@ohsu.edu")
+Description: The goal of this app is to make the processing of SDA results including QC and component selection.
+License: `use_gpl3_license()`
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Depends:
+    R (>= 3.5.0)
+biocViews:
+Imports:
+    shiny,
+    shinydashboard,
+    shinyWidgets,
+    shinyFiles,
+    data.table,
+    dplyr,
+    ggplot2,
+    ggforce,
+    ggthemes,
+    ggthemes,
+    ggrepel,
+    rclipboard,
+    grid,
+    gridExtra,
+    stringr,
+    viridis,
+    RColorBrewer,
+    BiocParallel,
+    Seurat,
+    SDAtools
+Suggests:
+    ggvis,
+    devtools
+Remotes:
+    marchinilab/SDAtools
