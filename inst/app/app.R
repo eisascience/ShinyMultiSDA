@@ -48,8 +48,8 @@ ui <- dashboardPage(skin="red",
                     dashboardSidebar(
                       sidebarMenu(
                         menuItem("Folder Input", tabName = "FolderInput", icon = icon("dashboard")),
-                        menuItem("Gene-loading Cor HM", tabName = "GL_cor_HM", icon = icon("wrench")),
-                        menuItem("Save Out", tabName = "SaveOut", icon = icon("save")),
+                        menuItem("Gene Loading HM", tabName = "GL_HM", icon = icon("wrench")),
+                        # menuItem("Save Out", tabName = "SaveOut", icon = icon("save")),
                         menuItem("@eisamahyari", icon = icon("heart"), 
                                  href = "https://eisascience.github.io")
                       )
@@ -102,17 +102,44 @@ ui <- dashboardPage(skin="red",
                                 ),
                         
                        
-                        
                         # Save out----------
-                        tabItem(tabName = "SaveOut",
-                                h2("Save the results for downstream analysis"),
+                        tabItem(tabName = "GL_HM",
+                                h2("Combined Gene Loadings Heatmap"),
                                 fluidRow(
                                   box(
-                                    title = "Save as Seurat Object", status = "primary", solidHeader = TRUE,
+                                    title = "Threshold gene loading", status = "primary", solidHeader = TRUE,
                                     collapsible = TRUE,
-                                    actionButton("SaveAsSerObj", "Save as Seurat Obj"),
-                                    width = 5, background = "black"
-                                  )))
+                                    plotOutput("Comb_GL_Hist_Zscore"),
+                                    sliderInput(inputId = "GL_Zscore_slider", 
+                                                label = "Gene Loading Z-score Value:", 
+                                                min = 0, 
+                                                max = 10, 
+                                                value = 7, 
+                                                step = 1),
+                                    width = 10, background = "black"
+                                  ),
+                                  box(
+                                    title = "Combine Gene Loadings (Z-score) Heatmap", status = "primary", solidHeader = TRUE,
+                                    collapsible = TRUE,
+                                    plotOutput("Comb_GL_HM_Zscore"),
+                                    width = 10, background = "teal"
+                                  ),
+                                  
+                                  
+                                  )),
+                        
+                        
+                        
+                        # Save out----------
+                        # tabItem(tabName = "SaveOut",
+                        #         h2("Save the results for downstream analysis"),
+                        #         fluidRow(
+                        #           box(
+                        #             title = "Save as Seurat Object", status = "primary", solidHeader = TRUE,
+                        #             collapsible = TRUE,
+                        #             actionButton("SaveAsSerObj", "Save as Seurat Obj"),
+                        #             width = 5, background = "black"
+                        #           )))
                         
                       ) #end of tabItems
                     ) #end of body
@@ -148,7 +175,13 @@ server <- function(input, output, session) {
     checkboxGroupInput("files", "Available .rds files", choices=basename(files))
   })
   
+  source("app_Figs.R",local = TRUE)
   source("app_OE.R",local = TRUE)
+  
+  
+  output$GL_Zscore_slider <- renderUI({
+    sliderInput("GL_Zscore_slider", "Gene Loading Z-score Value:", min = 0, max = 10, value = 7)
+  })
   
   
   
