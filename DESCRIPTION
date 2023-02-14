@@ -33,10 +33,13 @@ Imports:
     viridis,
     RColorBrewer,
     BiocParallel,
-    Seurat,
-    SDAtools
+    SDAtools,
+    ShinySDA,
+    scCustFx
 Suggests:
     ggvis,
     devtools
 Remotes:
-    marchinilab/SDAtools
+    marchinilab/SDAtools,
+    eisascience/ShinySDA,
+    eisascience/scCustFx

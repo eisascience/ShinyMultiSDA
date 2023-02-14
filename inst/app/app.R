@@ -116,6 +116,12 @@ ui <- dashboardPage(skin="red",
                                                 max = 10, 
                                                 value = 7, 
                                                 step = 1),
+                                    sliderInput(inputId = "GL_Kmeans_slider", 
+                                                label = "K Cut + Kmeans", 
+                                                min = 2, 
+                                                max = 15, 
+                                                value = 5, 
+                                                step = 1),
                                     width = 10, background = "black"
                                   ),
                                   box(
@@ -124,6 +130,13 @@ ui <- dashboardPage(skin="red",
                                     plotOutput("Comb_GL_HM_Zscore"),
                                     width = 10, background = "teal"
                                   ),
+                                  box(
+                                    title = "Combine Gene Loadings (Z-score) Heatmap", status = "primary", solidHeader = TRUE,
+                                    collapsible = TRUE,
+                                    plotOutput("Comb_GL_HM_Kmeans"),
+                                    width = 10, background = "teal"
+                                  ),
+                                  
                                   
                                   
                                   ))#,
@@ -171,8 +184,21 @@ server <- function(input, output, session) {
 
     files = files[!grepl("rawData", files)]
     files = files[!grepl("SDAtools", files)]
+    files = files[!grepl("tSNE", files)]
+    
+    names(files) = gsub("sda.", "", gsub(".rds", "", basename(files)))
+    
+    if(file.exists(paste0(path, "/rawData_idDF.rds"))){
+      DataMetaDF = readRDS( paste0(path, "/rawData_idDF.rds"))
+
+      fileChoices = paste0(names(files), " - ", DataMetaDF[names(files), ]$ObjName)
+    } else {
+      fileChoices = basename(files)
+    }
+
     # envv$input_SDA_files = files
-    checkboxGroupInput("files", "Available .rds files", choices=basename(files))
+    checkboxGroupInput("files", "Available .rds files", choiceValues=basename(files), 
+                       choiceNames = fileChoices)
   })
   
   source("app_Figs.R",local = TRUE)
@@ -181,6 +207,10 @@ server <- function(input, output, session) {
   
   output$GL_Zscore_slider <- renderUI({
     sliderInput("GL_Zscore_slider", "Gene Loading Z-score Value:", min = 0, max = 10, value = 7)
+  })
+  
+  output$GL_Zscore_slider <- renderUI({
+    sliderInput("GL_Kmeans_slider", "K Cut rows + Kmeans:", min = 2, max = 15, value = 5)
   })
   
   

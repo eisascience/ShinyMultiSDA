@@ -9,11 +9,37 @@ output$Comb_GL_HM_Zscore <- renderPlot({
     
     envv$Loading_thr_genes = colnames(envv$proc_obj_mat)[col_sums > input$GL_Zscore_slider]
     
-    pheatmap::pheatmap(asinh(scale(envv$proc_obj_mat[,envv$Loading_thr_genes], center = T, scale = T)))
-    
+    pheatmap::pheatmap(asinh(scale(envv$proc_obj_mat[,envv$Loading_thr_genes], center = T, scale = T)), 
+                       clustering_distance_rows = "euclidean",
+                       clustering_distance_cols = "euclidean", 
+                       clustering_method = "ward.D2",
+                       cutree_rows = input$GL_Kmeans_slider, cutree_cols = NA
+    )    
     
   }
 })
+
+output$Comb_GL_HM_Kmeans <- renderPlot({
+  if(is.null(envv$proc_obj_mat)){
+    plot(x=0, y=0, main="Load an SDA")
+  } else {
+    
+    col_sums = envv$col_sums
+    
+    envv$Loading_thr_genes = colnames(envv$proc_obj_mat)[col_sums > input$GL_Zscore_slider]
+    
+    pheatmap::pheatmap(asinh(scale(envv$proc_obj_mat[,envv$Loading_thr_genes], center = T, scale = T)), 
+                       clustering_distance_rows = "euclidean",
+                       clustering_distance_cols = "euclidean", 
+                       clustering_method = "ward.D2",
+                       cutree_rows = input$GL_Kmeans_slider, cutree_cols = NA, kmeans_k = input$GL_Kmeans_slider
+    )    
+    
+  }
+})
+
+
+
 
 
 output$Comb_GL_Hist_Zscore <- renderPlot({
