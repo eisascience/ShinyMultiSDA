@@ -1,5 +1,8 @@
 library(ggplot2)
 library(dplyr)
+library(scCustFx)
+
+
 
 DevMode = T
 
@@ -9,6 +12,16 @@ path = "/Volumes/Maggie/Work/OHSU/Bimber/Expts/RIRA_manuscript/data/sda/primeseq
 envv = list()
 input = list()
 
+
+
+# list.files("/Volumes/Maggie/Work/OHSU/Bimber/Expts/RIRA_manuscript/data/RIRA4/RIRA4v2")
+
+library(Seurat)
+library(SeuratDisk)
+
+
+
+envv$input_obj_ser = readRDS("/Volumes/Maggie/Work/OHSU/Bimber/Expts/RIRA_manuscript/data/RIRA4/RIRA4v2/RIRA4_AllTissues_ADT_Filter-T_NK.seurat_10K.rds")
 
 
 
@@ -90,6 +103,62 @@ envv$proc_obj_mat =  do.call(rbind, envv$proc_obj_ls)
 rownames(envv$proc_obj_mat) = unlist(lapply(1:length(envv$proc_obj_ls), function(xN){
   paste0( names(envv$proc_obj_ls)[xN], "_V", 1:nrow(envv$proc_obj_ls[[xN]]))
 }))
+
+
+
+###---
+
+
+
+
+
+  # tempDFX <- as.data.frame(envv$input_obj_ser@reductions$umap@cell.embeddings)
+  # colnames(tempDFX) <- c("Dim1", "Dim2")
+  # 
+  # tempDFX$CompScore <- rep(0, nrow(tempDFX))
+  
+  envv$SDAcomp2Projx = 3
+  
+  
+
+  
+  #TODO: filter on genes
+  
+  envv$SDAgenes2Projx = names(envv$proc_obj_mat[envv$SDAcomp2Projx, ])
+  envv$SDAgenes2Projx = envv$SDAgenes2Projx[envv$SDAgenes2Projx %in% rownames(envv$input_obj_ser)]
+  
+  SDAscore = envv$proc_obj_mat[envv$SDAcomp2Projx, envv$SDAgenes2Projx] %*% envv$input_obj_ser@assays$RNA@data[envv$SDAgenes2Projx,]
+
+  
+  envv$input_obj_ser = AddMetaData(envv$input_obj_ser , as.data.frame(t(asinh(SDAscore))), 
+                                   col.name = rownames(envv$proc_obj_mat)[envv$SDAcomp2Projx])
+  
+Seurat::FeaturePlot(envv$input_obj_ser, 
+                            features = c(rownames(envv$proc_obj_mat)[envv$SDAcomp2Projx]), 
+                    # max.cutoff = 'q99', min.cutoff = 'q01',
+                    order = T) + coord_flip()  + scale_y_reverse() +
+  theme_classic(base_size = 14) + #NoLegend()+
+  theme(axis.line = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank() #,plot.title = element_blank()
+  )  + ggtitle(rownames(envv$proc_obj_mat)[envv$SDAcomp2Projx]) &
+  ggplot2::scale_colour_gradientn(colours = c("navy", "dodgerblue", "gold", "red"))
+  
+ 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

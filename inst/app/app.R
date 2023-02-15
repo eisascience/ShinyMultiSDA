@@ -47,8 +47,11 @@ ui <- dashboardPage(skin="red",
                     #https://rstudio.github.io/shinydashboard/appearance.html#icons
                     dashboardSidebar(
                       sidebarMenu(
-                        menuItem("Folder Input", tabName = "FolderInput", icon = icon("dashboard")),
+                        menuItem("Folder Input", tabName = "FolderInput_sda", icon = icon("dashboard")),
                         menuItem("Gene Loading HM", tabName = "GL_HM", icon = icon("wrench")),
+                        menuItem("Seurat Obj Input", tabName = "FolderInput_ser", icon = icon("dashboard")),
+                        menuItem("ProjX SDA on Seurat", tabName = "SDA2Ser_projx", icon = icon("wrench")),
+                        
                         # menuItem("Save Out", tabName = "SaveOut", icon = icon("save")),
                         menuItem("@eisamahyari", icon = icon("heart"), 
                                  href = "https://eisascience.github.io")
@@ -80,7 +83,7 @@ ui <- dashboardPage(skin="red",
                       tabItems(
                         
                         # Folder input------
-                        tabItem(tabName = "FolderInput",
+                        tabItem(tabName = "FolderInput_sda",
                                 h2("Select Needed SDA models"),
                                 fluidRow(
                                   valueBoxOutput("InfoBox_Folder", width = 6),
@@ -101,8 +104,72 @@ ui <- dashboardPage(skin="red",
                                 
                                 ),
                         
+                        
+                        # Folder input------
+                        tabItem(tabName = "FolderInput_ser",
+                                h2("Load Seurat Obj rds file"),
+                                fluidRow(
+                                  valueBoxOutput("InfoBox_Folder_ser", width = 6),
+                                  
+                                  box(textInput("SerObjroot", "Path to Seurat Obj.", 
+                                                value =init.path),
+                                      actionButton("loadSerObj", "Load SerObj"),
+                                      # actionButton("CombineSDAs", "Combine SDA Loadings"),
+                                      width = 10, background = "teal"
+                                      
+                                  ),
+                                  box(#uiOutput("files_ui"),
+                                    uiOutput("select.folder_ser"),
+                                    
+                                      width = 10, background = "teal"
+                                      
+                                  ),
+                                  box(#uiOutput("files_ui"),
+                                    plotOutput("DimPlot_base_ser"),
+                                    
+                                    width = 10, background = "teal"
+                                    
+                                  ),
+                                  
+                                  
+                                  
+                                )
+                                
+                        ),
+                        
+                        
+                        # SDA2Ser_projx------
+                        tabItem(tabName = "SDA2Ser_projx",
+                                h2("Project SDA Components on the Seurat Object"),
+                                fluidRow(
+                                  box(
+                                    actionButton("PrevComp", "<< Prev Comp"),
+                                    actionButton("NextComp", "Next Comp >>"),
+                                   
+                                    
+                                    width = 5, background = "black"
+                                  ),
+                                  
+                                  box(
+                                    plotOutput("FeaturePlot_projx"),
+                                    
+                                      width = 10, background = "teal"
+                                      
+                                  ),
+                                  box(title = "Pos. Top Genes", status = "info", solidHeader = TRUE, width = 4,
+                                      tableOutput("packageTablePos")
+                                  ),
+                                  box(title = "Neg. Top Genes", status = "info", solidHeader = TRUE, width = 4,
+                                      tableOutput("packageTableNeg")
+                                  )
+                                  
+                                )
+                                
+                        ),
+                        
+                        
                        
-                        # Save out----------
+                        # Gene loadings Heatmap ----------
                         tabItem(tabName = "GL_HM",
                                 h2("Combined Gene Loadings Heatmap"),
                                 fluidRow(
@@ -164,7 +231,7 @@ server <- function(input, output, session) {
   
   
   ## loading local files
-  shinyFileChoose(input,'file', session=session,roots=c(wd='.'))
+  shinyFileChoose(input,'file_sda', session=session,roots=c(wd='.'))
   
   
   ## environment defaults
@@ -177,6 +244,9 @@ server <- function(input, output, session) {
   ## controls how to handle pipe depending on data
   envv$Origin = "unk"
   
+ 
+  
+  #SDA files UI handler ---- 
   output$files_ui <- renderUI({
     req(input$SDAroot)
     path <- input$SDAroot
@@ -197,12 +267,70 @@ server <- function(input, output, session) {
     }
 
     # envv$input_SDA_files = files
-    checkboxGroupInput("files", "Available .rds files", choiceValues=basename(files), 
+    checkboxGroupInput("files_sda", "Available .rds files", choiceValues=basename(files), 
                        choiceNames = fileChoices)
   })
   
+  
+  #Ser Obj file UI handler ---- 
+  
+  output$select.folder_ser <- renderUI({
+    req(input$SerObjroot)
+    path <- input$SerObjroot
+    files <- list.files(path=path, pattern=".rds", full.names=TRUE, recursive=F)
+    
+    files = files[!grepl("rawData", files)]
+    files = files[!grepl("SDAtools", files)]
+    files = files[!grepl("tSNE", files)]
+    files = files[!grepl("DEres", files)]
+    
+    
+    names(files) = gsub("sda.", "", gsub(".rds", "", basename(files)))
+
+    # envv$input_SDA_files = files
+    selectInput("file_ser", "Available .rds files", 
+                choices = basename(files), 
+                multiple = F)
+  })
+  
+  
+  # ### SDA local folder
+  # output$select.folder <-
+  #   renderUI(expr = selectInput(inputId = 'folder.name',
+  #                               label = 'Folder Name',
+  #                               choices = list.dirs(path = input$SDAroot,
+  #                                                   full.names = FALSE,
+  #                                                   recursive = FALSE)))
+  
+  
+  
   source("app_Figs.R",local = TRUE)
   source("app_OE.R",local = TRUE)
+  
+  output$packageTablePos <- renderTable({
+    
+    req(envv$proc_obj_mat)
+    req(envv$SDAcomp2Projx)
+    
+    topNfeats = 20
+
+    sort(envv$proc_obj_mat[envv$SDAcomp2Projx, ], decreasing = T)[1:topNfeats] %>% names()
+      
+  
+  }, digits = 1)
+  
+  output$packageTableNeg <- renderTable({
+    
+    req(envv$proc_obj_mat)
+    req(envv$SDAcomp2Projx)
+    
+    topNfeats = 20
+    
+    sort(envv$proc_obj_mat[envv$SDAcomp2Projx, ], decreasing = F)[1:topNfeats] %>% names()
+    
+  }, digits = 1)
+  
+  
   
   
   output$GL_Zscore_slider <- renderUI({

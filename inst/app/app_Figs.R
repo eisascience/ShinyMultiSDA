@@ -1,5 +1,64 @@
 
 
+
+output$FeaturePlot_projx <- renderPlot({
+  if(is.null(envv$input_obj_ser) | is.null(envv$proc_obj_mat)){
+    plot(x=0, y=0, main="Load an SDA")
+  } else {
+    
+    require(Seurat)
+    
+    if(is.null(envv$SDAcomp2Projx)){
+      envv$SDAcomp2Projx = 1
+    } 
+    
+    envv$SDAgenes2Projx = names(envv$proc_obj_mat[envv$SDAcomp2Projx, ])
+    envv$SDAgenes2Projx = envv$SDAgenes2Projx[envv$SDAgenes2Projx %in% rownames(envv$input_obj_ser)]
+    
+    SDAscore = envv$proc_obj_mat[envv$SDAcomp2Projx, envv$SDAgenes2Projx] %*% envv$input_obj_ser@assays$RNA@data[envv$SDAgenes2Projx,]
+    
+    
+    envv$input_obj_ser = AddMetaData(envv$input_obj_ser , as.data.frame(t(asinh(SDAscore))), 
+                                     col.name = rownames(envv$proc_obj_mat)[envv$SDAcomp2Projx])
+    
+    Seurat::FeaturePlot(envv$input_obj_ser, 
+                        features = c(rownames(envv$proc_obj_mat)[envv$SDAcomp2Projx]), 
+                        # max.cutoff = 'q99', min.cutoff = 'q01',
+                        order = T) + coord_flip()  + scale_y_reverse() +
+      theme_classic(base_size = 14) + #NoLegend()+
+      theme(axis.line = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks = element_blank(),
+            axis.title = element_blank() #,plot.title = element_blank()
+      )  + ggtitle(rownames(envv$proc_obj_mat)[envv$SDAcomp2Projx]) &
+      ggplot2::scale_colour_gradientn(colours = c("navy", "dodgerblue", "gold", "red"))
+    
+    
+    
+    
+  
+  
+  
+    
+    
+    
+  }
+})
+
+
+
+output$DimPlot_base_ser <- renderPlot({
+  if(is.null(envv$input_obj_ser)){
+    plot(x=0, y=0, main="Load an SDA")
+  } else {
+   require(Seurat)
+    DimPlot(envv$input_obj_ser)
+    
+  }
+})
+
+
 output$Comb_GL_HM_Zscore <- renderPlot({
   if(is.null(envv$proc_obj_mat)){
     plot(x=0, y=0, main="Load an SDA")
